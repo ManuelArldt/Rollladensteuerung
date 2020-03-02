@@ -1,6 +1,6 @@
-## Rolladensteuerung
+# Rolladensteuerung
 
-# Projektbeschreibung / Funktionen:
+## Projektbeschreibung / Funktionen:
 
 * Motor auf/ab
 * Windsensor auswerten
