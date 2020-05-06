@@ -1,0 +1,15 @@
+Daten Windsensor 0-5V
+
+•	Accuracy: + - 1m / s
+•	Start Wind: 0.2-0.4m / s
+•	Voltage output type:  Range: 0 ~ 32.4m / s 
+•	Supply voltage: 7V ~ 24VDC
+
+
+0-5V voltage wind speed sensor
+Accuracy: + - 1m / s 
+Start Wind: 0.2-0.4m / s 
+  Voltage output type:  Range: 0 ~ 32.4m / s 
+Supply voltage: 7V ~ 24VDC 
+Output signals: 0-5V
+Wind speed values :(output voltage)/5*32.4   
