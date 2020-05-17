@@ -1,5 +1,5 @@
 # Rollladensteuerung – M. Arldt, H. Wittkopp
-## Projektbeschreibung:
+## Projektbeschreibung
 Über die Rollladensteuerung soll ein elektrischer Rollladen von Hand (3 Taster: AUF, AB und STOPP) oder per Automatik (Zufahren bei Wind oder Dämmerung, Auffahren bei Windstille und Tageslicht) gesteuert werden. 
 Die Hand/Automatik - Umschaltung erfolgt über einen Betriebsartenwahlschalter.  
 Der aktuelle Status wird durch LEDs visualisiert.(„Fährt auf“ grüne LED P3, „fährt zu“ grüne LED P4, „Windwarnung“ rote LED P1, „Dämmerung“ gelbe LED P2) 
@@ -7,7 +7,7 @@ Der aktuelle Status wird durch LEDs visualisiert.(„Fährt auf“ grüne LED P3
 Wie lange die Windwarnung sowie der Dämmerungsschalter aktiv/inaktiv sein muss bis eine Reaktion (Rollladen auf oder ab) erfolgt, lässt sich über in Variablen hinterlegten Sollwerten vorgeben.
 Alle Analogwerte sowie die Betriebsart werden bei Werteänderung über den seriellen Monitor ausgegeben. 
 
-## Funktionen/2do:
+## Funktionen/2do
 * Motor auf/ab (Software unproblematisch, Hardware: Sicherheit 230V Antrieb einschl. Störsicherheit)
 * Windsensor auswerten (Analogwertverarbeitung)
 * Dämmerungsschalter auswerten (Analogwertverarbeitung)
@@ -19,5 +19,19 @@ Alle Analogwerte sowie die Betriebsart werden bei Werteänderung über den serie
 * Rückmeldung der Analogwerte Windgeschwindigkeit (DW und m/s), Helligkeit (DW und %), Sollwertvorgaben (DW und %) über den seriellen Monitor (Programmlogik)
   
 
-## Optional:
+## Optional
 * Zeitschaltuhr (Problem: RTC Real Time Clock!)
+
+## Aufbau
+
+![Aufbau](https://github.com/CRBK/Rolladensteuerung/blob/master/Bilder%20TinkerCad/mit_bez.PNG?raw=true)
+
+## Beispielausgabe des seriellen Monitors
+
+![Ausgabe](https://github.com/CRBK/Rolladensteuerung/blob/master/Bilder%20TinkerCad/Ausgabe.PNG?raw=true)
+
+## Komponentenliste
+
+
+
+## Programm
