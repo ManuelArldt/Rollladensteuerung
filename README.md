@@ -6,7 +6,7 @@ Der aktuelle Status wird durch LEDs visualisiert.(„Fährt auf“ grüne LED P3
 Über 2 Potentiometer lassen sich die Schaltschwellen für den Windsensor sowie den Dämmerungsschalter einstellen.
 Wie lange die Windwarnung sowie der Dämmerungsschalter aktiv/inaktiv sein muss bis eine Reaktion (Rollladen auf oder ab) erfolgt, lässt sich über in Variablen hinterlegten Sollwerten vorgeben.
 Alle Analogwerte sowie die Betriebsart werden bei Werteänderung über den seriellen Monitor ausgegeben. 
-
+Ebenso erfolgt eine Klartextausgabe über den seriellen Monitor, wenn er Taster betätigt wurde, in welche Richtung der Rollladen gerade fährt und ob er oben oder unten ist.
 ## Funktionen/2do
 * Motor auf/ab (Software unproblematisch, Hardware: Sicherheit 230V Antrieb einschl. Störsicherheit)
 * Windsensor auswerten (Analogwertverarbeitung)
@@ -16,8 +16,7 @@ Alle Analogwerte sowie die Betriebsart werden bei Werteänderung über den serie
 * Schalter Hand/Automatik auswerten (Programmlogik)
 * Schaltschwelle für Windsensor per Potentiometer vorgeben (Analogwertverarbeitung)
 * Schaltschwelle für Dämmerungsschalter per Potentiometer vorgeben (Analogwertverarbeitung)
-* Rückmeldung der Analogwerte Windgeschwindigkeit (DW und m/s), Helligkeit (DW und %), Sollwertvorgaben (DW und %) über den seriellen Monitor (Programmlogik)
-  
+* Rückmeldung der Analogwerte Windgeschwindigkeit (DW und m/s), Helligkeit (DW und %), Sollwertvorgaben (DW und %), Tasterbetätigungen, Betirebsart und Endlage des Rollladens über den seriellen Monitor (Programmlogik)
 
 ## Optional
 * Zeitschaltuhr (Problem: RTC Real Time Clock!)
