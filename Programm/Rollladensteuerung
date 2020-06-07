@@ -1,0 +1,390 @@
+/*
+
+Rollladensteuerung – M. Arldt, H. Wittkopp - TE8W 
+
+Projektbeschreibung
+
+Über die Rollladensteuerung soll ein elektrischer Rollladen von Hand (3 Taster: AUF, AB und STOPP) oder per Automatik (Zufahren bei Wind oder Dämmerung, Auffahren bei Windstille und Tageslicht) gesteuert werden. 
+Die Hand/Automatik - Umschaltung erfolgt über einen Betriebsartenwahlschalter.  
+Der aktuelle Status wird durch LEDs visualisiert.(„Fährt auf“ grüne LED P3, „fährt zu“ grüne LED P4, „Windwarnung“ rote LED P1, „Dämmerung“ gelbe LED P2) 
+Über 2 Potentiometer lassen sich die Schaltschwellen für den Windsensor sowie den Dämmerungsschalter einstellen.
+Wie lange die Windwarnung sowie der Dämmerungsschalter aktiv/inaktiv sein muss bis eine Reaktion (Rollladen auf oder ab) erfolgt, lässt sich über in Variablen hinterlegten Sollwerten vorgeben.
+Alle Analogwerte sowie die Betriebsart werden bei Werteänderung über den seriellen Monitor ausgegeben. 
+Ebenso erfolgt eine Klartextausgabe über den seriellen Monitor, wenn er Taster betätigt wurde, in welche Richtung der Rollladen gerade fährt und ob er oben oder unten ist.
+
+  Funktionen
+
+* Motor auf/ab 
+* Windsensor auswerten 
+* Dämmerungsschalter auswerten
+* Rückmeldungen per LEDs geben
+* Taster AUF/STOPP/AB auswerten
+* Schalter Hand/Automatik auswerten
+* Schaltschwelle für Windsensor per Potentiometer vorgeben 
+* Schaltschwelle für Dämmerungsschalter per Potentiometer vorgeben 
+* Rückmeldung der Analogwerte Windgeschwindigkeit (DW und m/s), Helligkeit (DW und %), Sollwertvorgaben (DW und %), Tasterbetätigungen, Betirebsart und Endlage des Rollladens über den seriellen Monitor
+*/
+
+//******************************************************************************************************************************************************************************************************************
+
+int SensorWertLicht = 0; //Variable für den SensorWertLicht mit 0 als Startwert
+int SensorWertWind = 0; //Variable für den SensorWertWind mit 0 als Startwert
+int Schaltschwelle_Licht = 0; //Schaltschwelle_Licht in %
+int Schaltschwelle_Wind = 0; //Schaltschwelle_Wind in %
+int altWertLicht = 0; //Wertdarstellung auf seriellen Monitor nur bei Änderung
+int altWertWind = 0; //Wertdarstellung auf seriellen Monitor nur bei Änderung
+int ProzentwertLicht = 0; //Prozentuale Darstellung LDR
+int ProzentSollwertLicht = 0; 
+int ProzentwertWind = 0; //Prozentuale Darstellung Windgeschwindigkeit
+int ProzentSollwertWind = 0;
+int DaemmerungsschalterAktiv = 0; //Schaltschwelle_Licht für Dämmerungsschalter erreicht, für weitere Programmverarbeitung
+int Daemmerungsalarm=0; //// Die Schaltschwelle für Dämmerung wurde dauerhaft für die in "Zeit_bis_Daemmerungsalarm" eingestellte Zeitspanne überschritten
+int WindwarnungAktiv = 0; //Schaltschwelle_Wind erreicht, für weitere Programmverarbeitung
+int SollwertLicht=0; //für Potiauswertung Sollwert LDR
+int SollwertWind=0; //für Potiauswertung Sollwert Windsensor
+int altSollwertLicht;//für Potiauswertung Sollwert LDR
+int altSollwertWind;//für Potiauswertung Sollwert LDR
+int Stellung_Betriebsartenschalter; //Hand: HIGH Signal, Automatik LOW Signal (da Schaltsignal invertiert --> Drahtbruchsicherheit
+int Stellung_Betriebsartenschalter_alt; //um Änderung festzustellen
+int Windwarnung = 0; //Ist Windwarnung = 1 wurde die Schaltschwelle für Wind überschritten
+int Windalarm = 0; // Die Schaltschwelle für Wind wurde dauerhaft für die in "Zeit_für_Windalarm" eingestellte Zeitspanne überschritten
+int Betriebsart=0; //0 Hand, 1 Automatik
+int Rolladen_zufahren = 0; //Signal an Relais "AB"
+int Rolladen_auffahren =0; // Signal an Relais "AUF"
+int Rolladen_ist_zugefahren=0; //Stand Rolladen
+int Rolladen_ist_aufgefahren=0; //Stand Rolladen
+int Taster_Auffahrt; // Taster Hand Auffahrt 
+int Taster_Zufahrt; // Taster Hand Zufahrt
+int Taster_Halt; // Taster Stopp
+int altWertAuffahrt = 1; //nur bei Zustandsänderung Änderung
+int altWertZufahrt = 1; // nur bei Zustandsänderung Änderung
+int altWertHalt = 1; //nur bei Zustandsänderung Änderung
+int Hand_Auffahrt = 0; // Variable für Hand Auffahrt
+int Hand_Zufahrt = 0; // Variable für Hand Zufahrt
+int Hand_Stopp = 0; //Variable für STOPP Zufahrt
+
+unsigned long Windwarnung_aktiv_Laufzeit; //Startwert um die Zeit zu messen wie lange die Windwarnung schon aktiv ist
+unsigned long Windwarnung_inaktiv_Laufzeit; // Startwert um die Zeit zu messen wie lange die Windwarnung schon inaktiv ist
+unsigned long Zeit_bis_Windalarm_aktiv = 3000; //Hier eingeben wie lange die Windwarnung aktiv sein soll bis Windalarm gesetzt wird
+unsigned long Zeit_bis_Windalarm_inaktiv = 5000; //Hier eingeben wie lange die Windwarnung inaktiv sein soll bis Windalarm zurückgesetzt wird
+unsigned long Daemmerungwarnung_aktiv_Laufzeit=0; //Startwert um die Zeit zu messen wie lange die Dämmerungswarnung schon aktiv ist
+unsigned long Daemmerungwarnung_inaktiv_Laufzeit=0; //Startwert um die Zeit zu messen wie lange die Dämmerungswarnung schon inaktiv ist
+unsigned long Zeit_bis_Daemmerungsalarm_aktiv = 3000; //Hier eingeben wie lange die Dämmerungswarnung aktiv sein soll bis Dämmerungsalarm gesetzt wird
+unsigned long Zeit_bis_Daemmerungsalarm_inaktiv = 5000; //Hier eingeben wie lange die Dämmerungswarnung inaktiv sein soll bis Dämmerungsalarm zurückgesetzt wird
+unsigned long Zeit_Rolladenfahrt_ab = 5000;
+unsigned long Zeit_Rolladenfahrt_auf = 5000;
+unsigned long aktuelle_Laufzeit_Rolladenfahrt_ab = 0;
+unsigned long aktuelle_Laufzeit_Rolladenfahrt_auf = 0;
+
+const int LED_rot = 11;
+const int LED_gelb = 10; 
+const int LED_gruen_ab = 9;
+const int LED_gruen_auf = 8;
+const int Fotowiderstand = A0;  
+const int Windsensor = A1;
+const int Sollwert_Wind = A2;
+const int Sollwert_LDR= A3;
+const int Relais_Motor_ab = 6;
+const int Relais_Motor_auf = 7;
+const int Taster_auf = 2;
+const int Taster_Stopp = 3;
+const int Taster_ab = 4;
+const int Betriebsartenschalter = 5; //1 --> Hand 0-->Automatik 
+
+void setup()
+{
+  pinMode (LED_rot, OUTPUT);
+  pinMode (LED_gelb, OUTPUT);
+  pinMode (LED_gruen_ab, OUTPUT);
+  pinMode (LED_gruen_auf, OUTPUT);
+  pinMode (Relais_Motor_ab, OUTPUT);
+  pinMode (Relais_Motor_auf, OUTPUT);
+  pinMode(Taster_auf, INPUT_PULLUP); //Signal invertieren!
+  pinMode(Taster_ab, INPUT_PULLUP); //Signal invertieren!
+  pinMode(Taster_Stopp, INPUT_PULLUP); //Signal invertieren!
+  pinMode(Betriebsartenschalter, INPUT_PULLUP); //Signal invertieren!
+  
+  Serial.begin(9600); 
+}
+//*****************************************************************************************************
+void Betriebsartenwahl () //Schalterstellung Hand/Automatik ermitteln und in Variablen schreiben
+{
+  Stellung_Betriebsartenschalter = digitalRead(Betriebsartenschalter);
+
+  if (Stellung_Betriebsartenschalter==!Stellung_Betriebsartenschalter_alt)//Ausgabe nur bei Änderung
+  {
+   if (Stellung_Betriebsartenschalter ==LOW)
+   {
+    Betriebsart=1; //Automatik
+    Serial.println("Automatikbetrieb");
+   }
+   else
+   {
+    Betriebsart=0; //Hand
+    Serial.println("Handbetrieb");
+   }  
+   Stellung_Betriebsartenschalter_alt=Stellung_Betriebsartenschalter;
+  }	
+}
+//******************************************************
+
+void Tasterauswertung() //
+{
+  Taster_Auffahrt = digitalRead(Taster_auf);
+  Taster_Zufahrt = digitalRead(Taster_ab);
+  Taster_Halt = digitalRead(Taster_Stopp);
+  
+  if (Betriebsart==0)//Hand
+  {  
+   if (Taster_Auffahrt != altWertAuffahrt) //Ausgabe nur bei Wertänderung
+    {
+     //Serial.print("Taster_Auffahrt betaetigt: ");
+     //Serial.println(Taster_Auffahrt);
+     //altWertAuffahrt=Taster_Auffahrt;
+    }
+   if (Taster_Auffahrt==LOW) 
+   { 
+    Hand_Auffahrt = 1;
+	Serial.println("Taster_Auffahrt betaetigt");
+   }
+   else
+   {
+    Hand_Auffahrt = 0;
+   }
+   if (Taster_Zufahrt != altWertZufahrt) //Ausgabe nur bei Wertänderung
+   {
+    //Serial.print("Taster_Zufahrt betaetigt: ");
+    //Serial.println(Taster_Zufahrt); 
+    altWertZufahrt=Taster_Zufahrt;
+   }
+   if (Taster_Zufahrt==LOW) 
+   {
+    Hand_Zufahrt = 1; 
+    Serial.println ("Taster_Zufahrt betaetigt");
+   }
+   else
+   {
+    Hand_Zufahrt = 0;
+   }
+   if (Taster_Halt != altWertHalt) //Ausgabe nur bei Wertänderung
+   {
+    //Serial.print("Taster_Stopp betaetigt: ");
+    //Serial.println(Taster_Halt); 
+    altWertHalt=Taster_Halt;
+   }
+   if (Taster_Halt==LOW) 
+   {
+    Hand_Stopp = 1; 
+    Serial.println ("Taster_Stopp betaetigt");
+   }
+   else
+   {
+    Hand_Stopp = 0;
+   }  
+  }  
+}  
+//************************************************************************************************
+void LDR_auswerten() //LDR auswerten, gelbe LED ansteuern Variable DämmerungsschalterAktiv setzten
+{
+ SensorWertLicht = analogRead(Fotowiderstand); //Analogwert einlesen und in Variable schreiben
+ if (SensorWertLicht != altWertLicht) //Ausgabe nur bei Wertänderung
+ {  
+  ProzentwertLicht = map(SensorWertLicht,54,974,0,100);
+  Serial.print("SensorWertLicht = " ); 
+  Serial.print(SensorWertLicht); 
+  Serial.print(", ");
+  Serial.print(ProzentwertLicht);
+  Serial.println("%");
+  altWertLicht=SensorWertLicht;
+ }  
+ if (ProzentwertLicht < Schaltschwelle_Licht )
+ {
+  digitalWrite(LED_gelb, HIGH);
+  DaemmerungsschalterAktiv=1;
+ }
+ else 
+ {
+  digitalWrite(LED_gelb, LOW);
+  DaemmerungsschalterAktiv=0;
+ }
+}  
+//*************************************************************************************************
+void Windsensor_auswerten() //Windsensor auswerten, rote LED ansteuern Variable Windwarnung setzten
+{
+ SensorWertWind = analogRead(Windsensor); //Analogwert einlesen und in Variable schreiben
+ if (SensorWertWind != altWertWind) //Ausgabe nur bei Wertänderung
+ {  
+  ProzentwertWind = map(SensorWertWind,0,1023,0,100);
+  float Windgeschwindigkeit = SensorWertWind*32.4/1023.f; //32,4 m/s bei 5V
+  Serial.print("SensorWertWind = " ); 
+  Serial.print(SensorWertWind); 
+  Serial.print(", ");
+  Serial.print(ProzentwertWind);
+  Serial.print("%");
+  Serial.print(", ");  
+  Serial.print(Windgeschwindigkeit);
+  Serial.println(" m/s");  
+  altWertWind=SensorWertWind;
+ }  
+ if (ProzentwertWind > Schaltschwelle_Wind )
+ {
+  digitalWrite(LED_rot, HIGH); 
+  WindwarnungAktiv=1;
+ }
+ else 
+ {
+  digitalWrite(LED_rot, LOW);
+  WindwarnungAktiv=0;
+ }
+}  
+//*************************************************************************************************
+void Sollwert_Wind_auswerten() 
+{
+ SollwertWind = analogRead(Sollwert_Wind); //Analogwert einlesen und in Variable schreiben
+ if (SollwertWind != altSollwertWind) //Ausgabe nur bei Wertänderung
+ {  
+  ProzentSollwertWind = map(SollwertWind,0,1023,0,100);
+  Serial.print("Sollwert Windsensor " ); 
+  Serial.print(SollwertWind); 
+  Serial.print(", ");
+  Serial.print(ProzentSollwertWind);
+  Serial.println("%");
+  Schaltschwelle_Wind=ProzentSollwertWind;
+  altSollwertWind=SollwertWind;
+ }  
+}  
+//*************************************************************************************************
+void Sollwert_LDR_auswerten() 
+{
+ SollwertLicht = analogRead(Sollwert_LDR); //Analogwert einlesen und in Variable schreiben
+ if (SollwertLicht != altSollwertLicht) //Ausgabe nur bei Wertänderung
+ {  
+  ProzentSollwertLicht = map(SollwertLicht,0,1023,0,100);
+  Serial.print("Sollwert Lichtsensor " ); 
+  Serial.print(SollwertLicht); 
+  Serial.print(", ");
+  Serial.print(ProzentSollwertLicht);
+  Serial.println("%");
+  Schaltschwelle_Licht=ProzentSollwertLicht;
+  altSollwertLicht=SollwertLicht;
+ }  
+}  
+//***************************************************************************************************
+void Zeitverzoegerungen_Windalarm() 
+{ 
+ if (WindwarnungAktiv==1 && Windalarm==0 && millis()- Windwarnung_aktiv_Laufzeit > Zeit_bis_Windalarm_aktiv) 
+ {
+  Windwarnung_aktiv_Laufzeit = millis();
+  Serial.println ("Windalarm wurde gesetzt");
+   Windalarm = 1;
+ }
+ if (WindwarnungAktiv==0) 
+ {
+  Windwarnung_aktiv_Laufzeit = millis();  
+ }  
+ if (WindwarnungAktiv==0 && Windalarm==1 && millis()- Windwarnung_inaktiv_Laufzeit > Zeit_bis_Windalarm_inaktiv)
+ {
+  Windwarnung_inaktiv_Laufzeit = millis();
+  Windalarm = 0;
+  Serial.println ("Windalarm wurde zurueckgesetzt");
+ }
+ if (WindwarnungAktiv==1) 
+ {
+  Windwarnung_inaktiv_Laufzeit = millis();  
+ }  
+} 
+//***************************************************************************************************
+void Zeitverzoegerungen_Daemmerungsalarm() 
+{ 
+ if (DaemmerungsschalterAktiv==1 && Daemmerungsalarm==0 && millis() > Zeit_bis_Daemmerungsalarm_aktiv + Daemmerungwarnung_aktiv_Laufzeit) 
+ {
+  Daemmerungwarnung_aktiv_Laufzeit = millis();
+  Serial.println ("Daemmerungsalarm wurde gesetzt");
+  Daemmerungsalarm=1;
+ }
+ if (DaemmerungsschalterAktiv==0)
+ {
+  Daemmerungwarnung_aktiv_Laufzeit=millis();
+ }
+ if (DaemmerungsschalterAktiv==0 && Daemmerungsalarm==1 && millis() > Zeit_bis_Daemmerungsalarm_inaktiv + Daemmerungwarnung_inaktiv_Laufzeit)
+ {
+  Daemmerungwarnung_inaktiv_Laufzeit = millis();
+  Daemmerungsalarm=0;
+  Serial.println ("Daemmerungsalarm wurde zurueckgesetzt");
+ }  
+ if (DaemmerungsschalterAktiv==1)
+ {
+  Daemmerungwarnung_inaktiv_Laufzeit = millis();
+ }  
+} 
+//****************************************************************************************************
+void Relais_und_LEDs_ansteuern()
+{  
+ if (Hand_Stopp==1)
+ {
+  Rolladen_zufahren = 0;
+  Rolladen_auffahren= 0;
+  Rolladen_ist_zugefahren=0;
+  Rolladen_ist_aufgefahren=0; 
+ } 
+ if ((Betriebsart==1&&(Daemmerungsalarm ==1 || Windalarm ==1)||Hand_Zufahrt==1) && Rolladen_zufahren==0 && Rolladen_ist_zugefahren==0)
+ {
+  Rolladen_zufahren=1;
+  aktuelle_Laufzeit_Rolladenfahrt_ab = millis();
+  Serial.println("Rollladen faehrt zu");
+ }  
+ if (Rolladen_zufahren==1&& millis()- aktuelle_Laufzeit_Rolladenfahrt_ab > Zeit_Rolladenfahrt_ab)
+ {
+  Rolladen_zufahren = 0;
+  Rolladen_ist_zugefahren=1; 
+  Rolladen_ist_aufgefahren=0;
+  Serial.println("Rollladen ist zugefahren" );
+ }  
+ if (Rolladen_zufahren==1)
+ {
+  digitalWrite (Relais_Motor_ab, HIGH);
+  digitalWrite (LED_gruen_ab, HIGH);
+ }
+ else
+ {  
+  digitalWrite (Relais_Motor_ab, LOW);
+  digitalWrite (LED_gruen_ab, LOW);
+ }
+ if ((Betriebsart==1&&(Daemmerungsalarm ==0 && Windalarm ==0)||Hand_Auffahrt==1) && Rolladen_auffahren==0 && Rolladen_ist_aufgefahren==0)
+ {
+  Rolladen_auffahren=1;
+  aktuelle_Laufzeit_Rolladenfahrt_auf = millis();
+    Serial.println("Rollladen faehrt auf");
+ }  
+ if (Rolladen_auffahren==1&& millis()- aktuelle_Laufzeit_Rolladenfahrt_auf > Zeit_Rolladenfahrt_auf)
+ {
+  Rolladen_auffahren = 0;
+  Rolladen_ist_aufgefahren=1; 
+  Rolladen_ist_zugefahren=0;
+  Serial.println("Rollladen ist aufgefahren" );
+ }
+ if (Rolladen_auffahren==1)
+ {
+  digitalWrite (Relais_Motor_auf, HIGH);
+  digitalWrite (LED_gruen_auf, HIGH);
+ }
+ else
+ {  
+  digitalWrite (Relais_Motor_auf, LOW);
+  digitalWrite (LED_gruen_auf, LOW);
+ }
+}
+//*********************************************************************************************************
+void loop()
+{
+ Betriebsartenwahl();                   //Eingabe
+ Tasterauswertung();                    //Eingabe
+ LDR_auswerten();                       //Eingabe
+ Windsensor_auswerten();                //Verarbeitung
+ Sollwert_Wind_auswerten();             //Verarbeitung
+ Sollwert_LDR_auswerten();              //Verarbeitung
+ Zeitverzoegerungen_Windalarm();        //Verarbeitung & Ausgabe
+ Zeitverzoegerungen_Daemmerungsalarm(); //Verarbeitung & Ausgabe
+ Relais_und_LEDs_ansteuern();           //Ausgabe
+ delay (200);                           //sonst läuft der Simulator zu langsam
+}
