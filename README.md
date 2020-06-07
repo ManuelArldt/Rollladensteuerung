@@ -18,9 +18,6 @@ Ebenso erfolgt eine Klartextausgabe über den seriellen Monitor, wenn er Taster 
 * Schaltschwelle für Dämmerungsschalter per Potentiometer vorgeben (Analogwertverarbeitung)
 * Rückmeldung der Analogwerte Windgeschwindigkeit (DW und m/s), Helligkeit (DW und %), Sollwertvorgaben (DW und %), Tasterbetätigungen,   Betriebsart und Endlage des Rollladens über den seriellen Monitor (Programmlogik)
 
-## Optional
-* Zeitschaltuhr (Problem: RTC Real Time Clock!)
-
 ## Aufbau
 
 ![Aufbau](https://github.com/CRBK/Rolladensteuerung/blob/master/Bilder%20TinkerCad/mit_bez.PNG?raw=true)
@@ -34,7 +31,11 @@ Der Schaltplan zu dem Projekt ist [hier](https://github.com/CRBK/Rolladensteueru
 
 ## Komponentenliste
 
+
+
 ## Programm
+
+[Aktueller Programmstand](https://github.com/CRBK/Rollladensteuerung/blob/master/Programm/Rollladensteuerung)
 
 ## Videbeschreibung
 
